@@ -114,7 +114,7 @@ int main() {
 	ball.radius = 20;
 	ball.x = screen_windth / 2;
 	ball.y = screen_height / 2;
-	ball.speed_x = 7;
+	ball.speed_x = 20;
 	ball.speed_y = 7;
 
 	player.width = 25;
