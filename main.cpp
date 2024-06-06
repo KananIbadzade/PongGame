@@ -33,12 +33,14 @@ public:
 		DrawRectangleRounded(Rectangle{ x, y, width, height }, 0.8, 0, WHITE);
 	}
 
-	void Update() {
+	void Update(bool& isGamePaused) {
 		if (IsKeyDown(KEY_UP)) {
 			y = y - speed;
+			isGamePaused = false;
 		}
 		if (IsKeyDown(KEY_DOWN)) {
 			y = y + speed;
+			isGamePaused = false;
 		}
 
 		LimitMovement();
@@ -51,7 +53,9 @@ public:
 
 class CpuPaddle : public Paddle {
 public:
-	void Update(int ball_y) {
+	void Update(int ball_y, bool isGamePaused) {
+		if (isGamePaused) return; // Do not move the CPU paddle if the game is paused
+
 		if (y + height / 2 > ball_y) {
 			y = y - speed;
 		}
@@ -68,12 +72,17 @@ public:
 	float x, y;
 	int speed_x, speed_y;
 	int radius;
+	bool isGamePaused = true; // Game starts paused
+
 
 	void Draw() {
 		DrawCircle(x, y, radius, Yellow);
 	}
 
 	void Update(Paddle& player, CpuPaddle& cpu) {
+		if (isGamePaused) return;
+
+
 		x += speed_x;
 		y += speed_y;
 
@@ -101,6 +110,8 @@ public:
 		int  speed_choices[2] = { -1,1 };
 		speed_x *= speed_choices[GetRandomValue(0, 1)];
 		speed_y *= speed_choices[GetRandomValue(0, 1)];
+
+		isGamePaused = true; // Pause the game
 	}
 
 	void IncreaseSpeed(Paddle& player, CpuPaddle& cpu) {
@@ -138,18 +149,21 @@ int main() {
 
 	SetTargetFPS(60);
 
+	Ball ball;
 	ball.radius = 20;
 	ball.x = screen_windth / 2;
 	ball.y = screen_height / 2;
 	ball.speed_x = 7;
 	ball.speed_y = 7;
 
+	Paddle player;
 	player.width = 25;
 	player.height = 120;
 	player.x = screen_windth - player.width - 10;
 	player.y = screen_height / 2 - player.height / 2;
 	player.speed = 6;
 
+	CpuPaddle cpu;
 	cpu.width = 25;
 	cpu.height = 120;
 	cpu.x = 10;
@@ -160,8 +174,8 @@ int main() {
 		BeginDrawing();
 		//updating
 		ball.Update(player, cpu);
-		player.Update();
-		cpu.Update(ball.y);
+		player.Update(ball.isGamePaused);
+		cpu.Update(ball.y, ball.isGamePaused);
 
 		//checking for collisions
 		if (CheckCollisionCircleRec(Vector2{ ball.x, ball.y }, ball.radius, Rectangle{ player.x, player.y, player.width, player.height })) {
