@@ -33,12 +33,14 @@ public:
 		DrawRectangleRounded(Rectangle{ x, y, width, height }, 0.8, 0, WHITE);
 	}
 
-	void Update() {
+	void Update(bool& isGamePaused) {
 		if (IsKeyDown(KEY_UP)) {
 			y = y - speed;
+			isGamePaused = false;
 		}
 		if (IsKeyDown(KEY_DOWN)) {
 			y = y + speed;
+			isGamePaused = false;
 		}
 
 		LimitMovement();
@@ -51,7 +53,9 @@ public:
 
 class CpuPaddle : public Paddle {
 public:
-	void Update(int ball_y) {
+	void Update(int ball_y, bool isGamePaused) {
+		if (isGamePaused) return;
+
 		if (y + height / 2 > ball_y) {
 			y = y - speed;
 		}
@@ -68,12 +72,15 @@ public:
 	float x, y;
 	int speed_x, speed_y;
 	int radius;
+	bool isGamePaused = true;
 
 	void Draw() {
 		DrawCircle(x, y, radius, Yellow);
 	}
 
 	void Update(Paddle& player, CpuPaddle& cpu) {
+		if (isGamePaused) return;
+
 		x += speed_x;
 		y += speed_y;
 
@@ -101,6 +108,8 @@ public:
 		int  speed_choices[2] = { -1,1 };
 		speed_x *= speed_choices[GetRandomValue(0, 1)];
 		speed_y *= speed_choices[GetRandomValue(0, 1)];
+
+		isGamePaused = true;
 	}
 
 	void IncreaseSpeed(Paddle& player, CpuPaddle& cpu) {
@@ -137,7 +146,7 @@ int main() {
 	InitWindow(screen_windth, screen_height, "My Pong Game!");
 
 	SetTargetFPS(60);
-
+	
 	ball.radius = 20;
 	ball.x = screen_windth / 2;
 	ball.y = screen_height / 2;
@@ -154,14 +163,14 @@ int main() {
 	cpu.height = 120;
 	cpu.x = 10;
 	cpu.y = screen_height / 2 - cpu.height / 2;
-	cpu.speed = 6;
+	cpu.speed = 5.5;
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
 		//updating
 		ball.Update(player, cpu);
-		player.Update();
-		cpu.Update(ball.y);
+		player.Update(ball.isGamePaused);
+		cpu.Update(ball.y, ball.isGamePaused);
 
 		//checking for collisions
 		if (CheckCollisionCircleRec(Vector2{ ball.x, ball.y }, ball.radius, Rectangle{ player.x, player.y, player.width, player.height })) {
